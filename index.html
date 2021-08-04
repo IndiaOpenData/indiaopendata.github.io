@@ -32,20 +32,91 @@
           </span>
         </label>
 
-        <div class="trigger"><a class="page-link" href="/about/">About</a></div>
+        <!-- <div class="trigger"><a class="page-link" href="/about/">About</a></div> -->
       </nav></div>
+<style>
+
+.page-content {
+  max-width: 600px;
+  margin: auto;
+  background: white;
+  padding: 10px;
+}
+
+/* Remove extra left and right margins, due to padding */
+.row {margin: 0 -5px;}
+
+/* Clear floats after the columns */
+.row:after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+/* Responsive columns */
+@media screen and (max-width: 600px) {
+  .column {
+    width: 100%;
+    display: block;
+    margin-bottom: 20px;
+  }
+}
+
+/* Style the counter cards */
+.card {
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+  padding: 16px;
+  text-align: center;
+  background-color: orange;
+}
+
+</style>
+
+
 </header>
+
+
+
 <main class="page-content" aria-label="Content">
-      <div class="wrapper">
-        <div class="home">
-<h2 class="post-list-heading">Vaccine Data</h2>
-<p>Data as of July 30,2020. Does per 100 people data is caluclated considering total population.</p>
+ 
+<div class="row">
+  <div class="column">
+    <div class="card">
+      <h3>Doses Given</h3>
+	  <div id="card1">
+	  </div>
+    </div>
+  </div>
+  <div> <p> </p></div>
+  <div class="column">
+    <div class="card">
+      <h3>Percentage of population vaccinated</h3>
+      <div id="card2">
+	  </div>
+    </div>
+  </div>
+  
+
+</div>
+
+
+  
+
+</div>
+
+
+
+<h2 class="post-list-heading">Vaccine Current status</h2>
+<p>People Vaccinated with single dose and fully vaccinated</p>
 
 
 
 
 
       <div id="chart_div1" ></div>
+
+<h2 class="post-list-heading">Vaccination progress by State</h2>
+<p>Percentage of people vaccinated with single dose and fully vacinated by state</p>
 
       <div id="chart_div2" ></div>
 
@@ -58,16 +129,64 @@
   google.charts.setOnLoadCallback(loadDashboardData);
   
   function loadDashboardData(){
-   var query = new google.visualization.Query(
-        'https://docs.google.com/spreadsheets/d/1iXkM1LeSWLPqXTMZSz5T924s7uroLVWMvOI1JK8k2ks/gviz/tq?sheet=latest&headers=1&tq=&range=');
+	
+	var query2 = new google.visualization.Query(
+	'https://docs.google.com/spreadsheets/d/1iXkM1LeSWLPqXTMZSz5T924s7uroLVWMvOI1JK8k2ks/gviz/tq?sheet=opendata&headers=1&tq=&range=');
+	
+	query2.setQuery( "select B, F,G");
+
+    // Send the query with a callback function.
+    query2.send(handleQuery2Response);
+	
+	   var query = new google.visualization.Query(
+        'https://docs.google.com/spreadsheets/d/1iXkM1LeSWLPqXTMZSz5T924s7uroLVWMvOI1JK8k2ks/gviz/tq?sheet=latest&headers=1&tq=&range=A1:H39');
 
     // Apply query language statement.
-    query.setQuery('SELECT B,C,D,E,G');
+    query.setQuery('SELECT B,G,H,C,D');
     
     // Send the query with a callback function.
     query.send(handleQueryResponse);
+
   
   }
+  
+  /**
+ * Returns a number in Indian numbering system as a String
+ *
+ * @param {Number/String} number The integer to be converted.
+ * @param {Number} decimals The number of digits needed after decimal point.
+ * @return {String} Converted number as a String in Indian numbering unit.
+ */
+
+function changeNumberFormat(number, decimals, recursiveCall) {
+    const decimalPoints = decimals || 2;
+    const noOfLakhs = number / 100000;
+    let displayStr;
+    let isPlural;
+
+    // Rounds off digits to decimalPoints decimal places
+    function roundOf(integer) {
+        return +integer.toLocaleString(undefined, {
+            minimumFractionDigits: decimalPoints,
+            maximumFractionDigits: decimalPoints,
+        });
+    }
+
+    if (noOfLakhs >= 1 && noOfLakhs <= 99) {
+        const lakhs = roundOf(noOfLakhs);
+        isPlural = lakhs > 1 && !recursiveCall;
+        displayStr = `${lakhs} Lakh${isPlural ? 's' : ''}`;
+    } else if (noOfLakhs >= 100) {
+        const crores = roundOf(noOfLakhs / 100);
+        const crorePrefix = crores >= 100000 ? changeNumberFormat(crores, decimals, true) : crores;
+        isPlural = crores > 1 && !recursiveCall;
+        displayStr = `${crorePrefix} Crore${isPlural ? 's' : ''}`;
+    } else {
+        displayStr = roundOf(+number);
+    }
+
+    return displayStr;
+}
   
   function handleQueryResponse(response) {
     if (response.isError()) {
@@ -77,43 +196,59 @@
 
     var data = response.getDataTable();
 
-var formatter = new google.visualization.NumberFormat({
-    pattern: 'short'
-  });
-  formatter.format(data, 1);
-  formatter.format(data, 2);
-  formatter.format(data, 3);
-  formatter.format(data, 4);
+    var formatter = new google.visualization.NumberFormat({
+      pattern: 'long'
+    });
+    formatter.format(data, 3);
+    formatter.format(data, 4);
+
+    var indiaFirstDose = data.getValue(0, 1); 
+	var indiaFullyVaccinated = data.getValue(0, 2); 
 	
-	var view = new google.visualization.DataView(data);
+	var firstDoses = data.getValue(0, 3);
+	var secondDoses = data.getValue(0, 4);
+	document.getElementById("card1").innerHTML = "<p>First Dose  " + changeNumberFormat(firstDoses) + "</p>" + "<p>Second Dose  " + changeNumberFormat(secondDoses) + "</p>";
+	document.getElementById("card2").innerHTML = "<p>First Dose  " + indiaFirstDose + "%</p>" + "<p>Second Dose  " + indiaFullyVaccinated + "%</p>";
+
+
+	var formatter = new google.visualization.ColorFormat();
+	formatter.addRange(0, indiaFullyVaccinated - 0.01, 'white', 'orange');
+	formatter.addRange(indiaFullyVaccinated - 0.01, indiaFullyVaccinated + 0.01, 'white', 'black');
+	formatter.addRange(indiaFullyVaccinated +0.01, null, 'white', 'seagreen');
+	formatter.format(data, 2); // Apply formatter to second column
 	
+	
+	data.sort({column: 2, asc: true});
+ 
+	
+	var view = new google.visualization.DataView(data);	
 	var totalColumns = data.getNumberOfColumns();
 	
 	var columns = [];
-for (var i = 0; i < totalColumns ; i++) {
-    if (i > 0) {
+    for (var i = 0; i < 3 ; i++) {
+     if (i > 0) {
         columns.push(i);
-       
-
-    } else {
+     } else {
         columns.push(i);
+     }
     }
-}
 
 
 
-view.setColumns(columns);
+    view.setColumns(columns);
    
- var paddingHeight = 40;
-        var rowHeight = data.getNumberOfRows() * 15;
-        var chartHeight = rowHeight + paddingHeight;
+    var paddingHeight = 40;
+    var rowHeight = data.getNumberOfRows() * 15;
+    var chartHeight = 2*rowHeight + paddingHeight;
 		
-      var options = {
+    var options = {
+	    allowHtml: true,
         title: 'Percentage of Total Doses/Population',
-        height: chartHeight,
+        
+		height: chartHeight,
             chartArea: {
               height: rowHeight,
-			  width: '100%',
+			  //width: '100%',
             },
         colors: ['#b0120a', '#ffab91'],
 		displayAnnotations: true,
@@ -134,13 +269,61 @@ view.setColumns(columns);
             fontSize: 12 // or the number you want
           }		  
         }
-      };
-      var chart = new google.visualization.Table(document.getElementById('chart_div2'));
-      chart.draw(view, options);
+    };
 	
+	 
 
-
+    
+	var chart = new google.visualization.Table(document.getElementById('chart_div2'));
+	var container = document.getElementById('chart_div2');
+	
+	<!-- google.visualization.events.addListener(chart, 'ready', function ()  -->
+	<!-- { -->
+  	 <!-- console.log("Rows->" + data.getNumberOfRows()); -->
+      <!-- for (var i = 0; i < data.getNumberOfRows(); i++) { -->
+	  <!-- console.log("Rows->" + data.getValue(i, 0)); -->
+        <!-- if (data.getValue(i, 0) === 'India') { -->
+          <!-- // modify the table directly on 'ready' -->
+		  <!-- console.log("Rows for India ->" + i); -->
+          <!-- container.getElementsByTagName('TR')[i+1].style.backgroundColor = 'tomato'; -->
+		  <!-- view.setProperty(i,1,'style','background-color:magenta;'); -->
+        <!-- } -->
+      <!-- } -->
+    <!-- }); -->
+	
+	
+    chart.draw(view, options);
+	
   }
+  
+  
+    function handleQuery2Response(response) {
+	console.log("Inside response2");
+    if (response.isError()) {
+      alert('Error in query: ' + response.getMessage() + ' ' + response.getDetailedMessage());
+      return;
+    }
+
+    var data = response.getDataTable();
+
+    var formatter = new google.visualization.NumberFormat({
+      pattern: 'short'
+    });
+    formatter.format(data, 1);
+    formatter.format(data, 2);
+
+   var options = {
+          isStacked: true,
+          title: 'India Vaccination progress',
+          curveType: 'function',
+          legend: { position: 'bottom' }
+        };
+
+        var chart = new google.visualization.AreaChart(document.getElementById('chart_div1'));
+
+        chart.draw(data, options);
+		
+		}
   
 </script>
 
