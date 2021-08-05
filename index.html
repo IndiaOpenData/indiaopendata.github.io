@@ -78,7 +78,8 @@
 
 
 <main class="page-content" aria-label="Content">
- 
+
+ <div id="date_div"></div>
 <div class="row">
   <div class="column">
     <div class="card">
@@ -142,7 +143,7 @@
         'https://docs.google.com/spreadsheets/d/1iXkM1LeSWLPqXTMZSz5T924s7uroLVWMvOI1JK8k2ks/gviz/tq?sheet=latest&headers=1&tq=&range=A1:H39');
 
     // Apply query language statement.
-    query.setQuery('SELECT B,G,H,C,D');
+    query.setQuery('SELECT B,G,H,C,D,A');
     
     // Send the query with a callback function.
     query.send(handleQueryResponse);
@@ -201,14 +202,26 @@ function changeNumberFormat(number, decimals, recursiveCall) {
     });
     formatter.format(data, 3);
     formatter.format(data, 4);
+	
+	 
+
 
     var indiaFirstDose = data.getValue(0, 1); 
 	var indiaFullyVaccinated = data.getValue(0, 2); 
 	
 	var firstDoses = data.getValue(0, 3);
 	var secondDoses = data.getValue(0, 4);
+	var data_date = data.getValue(0, 5);
+	
+	var options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    var today  = new Date(data_date);
+
+console.log(today.toLocaleDateString("en-US", options));
+
+
 	document.getElementById("card1").innerHTML = "<p>First Dose  " + changeNumberFormat(firstDoses) + "</p>" + "<p>Second Dose  " + changeNumberFormat(secondDoses) + "</p>";
 	document.getElementById("card2").innerHTML = "<p>First Dose  " + indiaFirstDose + "%</p>" + "<p>Second Dose  " + indiaFullyVaccinated + "%</p>";
+	document.getElementById("date_div").innerHTML =  "<p> Vaccincation data source is Ministry of Health,India and updated on "+ today.toLocaleDateString("en-US", options) + "</p>" ;
 
 
 	var formatter = new google.visualization.ColorFormat();
